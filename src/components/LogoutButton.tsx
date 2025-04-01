@@ -1,18 +1,20 @@
 'use client';
 
 import { useMsal } from "@azure/msal-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LogoutButton() {
-  const { instance, accounts } = useMsal();
+  const { instance } = useMsal();
+  const router = useRouter();
 
   const handleLogout = () => {
-    if (accounts.length > 0) {
-      instance.logoutPopup({
-        account: accounts[0],
-        postLogoutRedirectUri: "/", // stays in your app only
-        mainWindowRedirectUri: "/", // prevents full page reload fallback
-      });
-    }
+    // Clear MSAL session only (no annoying popup)
+    instance.setActiveAccount(null);
+    instance.logoutRedirect({
+      onRedirectNavigate: () => false, // prevent full nav if needed
+      postLogoutRedirectUri: "/",
+    });
   };
 
   return (
