@@ -15,11 +15,18 @@ export default function Home() {
 
   useEffect(() => {
     if (accounts.length > 0) {
-      const email = accounts[0].username.toLowerCase();
+      const account = accounts[0];
+      const roles: string[] | undefined = account.idTokenClaims?.roles;
 
-      if (email.includes("chemist")) router.push("/chemist");
-      else if (email.includes("tech")) router.push("/technician");
-      else if (email.includes("manager")) router.push("/manager");
+      if (roles?.includes("Manager")) {
+        router.push("/manager");
+      } else if (roles?.includes("Technician")) {
+        router.push("/technician");
+      } else if (roles?.includes("Chemist")) {
+        router.push("/chemist");
+      } else {
+        router.push("/unauthorized"); // fallback if user has no role assigned
+      }
     }
   }, [accounts]);
 
@@ -40,7 +47,7 @@ export default function Home() {
 
           <button
             onClick={handleLogin}
-            className="mt-4 w-full md:w-auto bg-blue-600 hover:bg-blue-700 transition-all text-white font-medium py-3 px-8 rounded-lg shadow-lg"
+            className="cursor-pointer mt-4 w-full md:w-auto bg-blue-600 hover:bg-blue-700 transition-all text-white font-medium py-3 px-8 rounded-lg shadow-lg"
           >
             🔐 Sign in with Microsoft
           </button>
