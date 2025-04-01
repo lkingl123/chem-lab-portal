@@ -1,4 +1,6 @@
-export default function ChemistDashboard() {
+import { withRoleProtection } from "@/components/withRoleProtection";
+
+function ChemistDashboard() {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold">🧪 Chemist Dashboard</h1>
@@ -7,3 +9,4 @@ export default function ChemistDashboard() {
     );
   }
   
+  export default withRoleProtection(ChemistDashboard, ["Chemist"]);

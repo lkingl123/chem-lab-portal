@@ -1,4 +1,6 @@
-export default function ManagerDashboard() {
+import { withRoleProtection } from "@/components/withRoleProtection";
+
+function ManagerDashboard() {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold">📋 Manager Dashboard</h1>
@@ -6,4 +8,6 @@ export default function ManagerDashboard() {
       </div>
     );
   }
-  
+
+
+  export default withRoleProtection(ManagerDashboard, ["Manager"]);
