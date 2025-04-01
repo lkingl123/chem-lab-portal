@@ -4,33 +4,37 @@ import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "@/lib/authConfig";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import LoggingLoadingSpinner from "@/components/LoggingLoadingSpinner"; // ✅ import the spinner
+import LoggingLoadingSpinner from "@/components/LoggingLoadingSpinner";
 
 export default function Home() {
   const { instance, accounts } = useMsal();
   const router = useRouter();
-  const [loading, setLoading] = useState(false); // ✅ track spinner
+  const [loading, setLoading] = useState(false); // ✅ Spinner state
 
   const handleLogin = () => {
-    setLoading(true);
+    setLoading(true); // ✅ Show spinner before redirect
     instance.loginRedirect(loginRequest);
   };
 
   useEffect(() => {
     if (accounts.length > 0) {
-      setLoading(true); // ✅ show spinner while redirecting
+      setLoading(true); // ✅ Show spinner during role detection
+
       const account = accounts[0];
       const roles: string[] | undefined = account.idTokenClaims?.roles;
 
-      if (roles?.includes("Manager")) {
-        router.push("/manager");
-      } else if (roles?.includes("Technician")) {
-        router.push("/technician");
-      } else if (roles?.includes("Chemist")) {
-        router.push("/chemist");
-      } else {
-        router.push("/unauthorized");
-      }
+      // Simulate slight delay (optional UX polish)
+      setTimeout(() => {
+        if (roles?.includes("Manager")) {
+          router.push("/manager");
+        } else if (roles?.includes("Technician")) {
+          router.push("/technician");
+        } else if (roles?.includes("Chemist")) {
+          router.push("/chemist");
+        } else {
+          router.push("/unauthorized");
+        }
+      }, 2000); // 300ms to allow spinner to visibly show
     }
   }, [accounts]);
 
