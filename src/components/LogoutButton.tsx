@@ -3,10 +3,16 @@
 import { useMsal } from "@azure/msal-react";
 
 export default function LogoutButton() {
-  const { instance } = useMsal();
+  const { instance, accounts } = useMsal();
 
   const handleLogout = () => {
-    instance.logoutRedirect(); // Or use logoutPopup() for SPA-style logout
+    if (accounts.length > 0) {
+      instance.logoutPopup({
+        account: accounts[0],
+        postLogoutRedirectUri: "/", // stays in your app only
+        mainWindowRedirectUri: "/", // prevents full page reload fallback
+      });
+    }
   };
 
   return (
