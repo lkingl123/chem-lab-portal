@@ -1,12 +1,5 @@
-import { withRoleProtection } from "@/components/withRoleProtection";
+import ChemistDashboard from "@/components/chemist/ChemistDashboard";
 
-function ChemistDashboard() {
-    return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold">🧪 Chemist Dashboard</h1>
-        <p>View formulas, edit them, and submit for review.</p>
-      </div>
-    );
-  }
-  
-  export default withRoleProtection(ChemistDashboard, ["Chemist"]);
+export default function Page() {
+  return <ChemistDashboard />;
+}
