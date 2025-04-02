@@ -2,34 +2,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { usersCollection } from "@/lib/cosmos";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const userId = params.id;
-  const { role } = await req.json();
-
-  if (!role) {
-    return NextResponse.json({ error: "Role is required" }, { status: 400 });
-  }
-
-  try {
-    const { resource: existingUser } = await usersCollection.item(userId, userId).read();
-
-    if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+export async function PATCH(req: Request) {
+    const url = new URL(req.url);
+    const id = url.pathname.split("/").pop(); // Get the user ID from the URL
+  
+    if (!id) {
+      return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
     }
-
-    const updatedUser = {
-      ...existingUser,
+  
+    const body = await req.json();
+    const { role } = body;
+  
+    if (!role) {
+      return new Response(JSON.stringify({ error: "Missing role" }), { status: 400 });
+    }
+  
+    // 🔧 Upsert into Cosmos (assuming usersCollection is set up)
+    await usersCollection.items.upsert({
+      id,
       role,
-    };
-
-    await usersCollection.items.upsert(updatedUser);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("PATCH error:", error);
-    return NextResponse.json({ error: "Failed to update role" }, { status: 500 });
+    });
+  
+    return new Response(JSON.stringify({ success: true }));
   }
-}
+  
