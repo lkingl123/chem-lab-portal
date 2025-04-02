@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { usersCollection } from "@/lib/cosmos";
 
 // ✅ PATCH: Update a user's role
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
+export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing ID" }, { status: 400 });
@@ -40,7 +37,7 @@ export async function PATCH(
 
 // ✅ DELETE: Remove a user from Cosmos DB only
 export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
-    const { id } = context.params;
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing ID" }, { status: 400 });
