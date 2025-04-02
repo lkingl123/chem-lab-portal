@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { usersCollection } from "@/lib/cosmos";
 
 // ✅ PATCH: Update a user's role
-export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params;
+export async function PATCH(req: NextRequest, { params }: any) {
+    const { id } = params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing ID" }, { status: 400 });
