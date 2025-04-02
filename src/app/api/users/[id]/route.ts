@@ -36,18 +36,18 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
 }
 
 // ✅ DELETE: Remove a user from Cosmos DB only
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params;
-
-  if (!id) {
-    return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+export async function DELETE(req: NextRequest, { params }: any) {
+    const { id } = params;
+  
+    if (!id) {
+      return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+    }
+  
+    try {
+      await usersCollection.item(id, id).delete();
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      console.error("❌ Failed to delete user from Cosmos DB:", err);
+      return NextResponse.json({ error: "Server error" }, { status: 500 });
+    }
   }
-
-  try {
-    await usersCollection.item(id, id).delete();
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("❌ Failed to delete user from Cosmos DB:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
