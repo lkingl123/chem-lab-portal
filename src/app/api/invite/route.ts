@@ -1,4 +1,3 @@
-// /src/app/api/invite/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@microsoft/microsoft-graph-client";
 import { usersCollection } from "@/lib/cosmos";
@@ -19,50 +18,68 @@ async function getAccessToken(): Promise<string> {
       scope: "https://graph.microsoft.com/.default",
     }),
   });
-
   const data = await res.json();
+  if (!data.access_token) throw new Error("Access token not received");
   return data.access_token;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, role } = await req.json();
+    const { email, displayName, role } = await req.json();
 
-    if (!email || !role) {
-      return NextResponse.json({ error: "Email and role are required" }, { status: 400 });
+    if (!email || !displayName || !role) {
+      return NextResponse.json(
+        { error: "Email, displayName, and role are required" },
+        { status: 400 }
+      );
+    }
+
+    // 🔍 Check if the email already exists in Cosmos DB
+    const query = {
+      query: "SELECT * FROM c WHERE c.email = @email",
+      parameters: [{ name: "@email", value: email }],
+    };
+    const { resources: existingUsers } = await usersCollection.items
+      .query(query)
+      .fetchAll();
+
+    if (existingUsers.length > 0) {
+      return NextResponse.json(
+        { error: "A user with this email has already been invited." },
+        { status: 409 }
+      );
     }
 
     const token = await getAccessToken();
     const client = Client.init({ authProvider: (done) => done(null, token) });
 
-    // Step 1: Invite the user
-    const invite = await client.api("/invitations").post({
+    const invitation = await client.api("/invitations").post({
       invitedUserEmailAddress: email,
-      inviteRedirectUrl: "https://localhost:3000/", // or your prod URL
+      inviteRedirectUrl: "http://localhost:3000",
       sendInvitationMessage: true,
     });
 
-    const invitedUser = invite.invitedUser;
-    const userId = invitedUser?.id;
-    const userPrincipalName = invitedUser?.userPrincipalName;
-    const displayName = invitedUser?.displayName || email;
+    let userId = invitation?.invitedUser?.id;
 
-    if (!userId || !userPrincipalName) {
-      return NextResponse.json({ error: "Failed to invite user" }, { status: 500 });
+    if (!userId) {
+      const user = await client.api(`/users/${email}`).get();
+      userId = user?.id;
     }
 
-    // Step 2: Store user + role in Cosmos DB
+    if (!userId) {
+      return NextResponse.json({ error: "Unable to resolve invited user" }, { status: 500 });
+    }
+
     await usersCollection.items.upsert({
       id: userId,
       email,
-      userPrincipalName,
       displayName,
       role,
     });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Invite error:", err);
+  } catch (err: any) {
+    console.error("/api/invite error:", err.message, err.stack);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
