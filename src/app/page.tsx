@@ -17,27 +17,50 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (accounts.length > 0) {
-      setLoading(true); // ✅ Show spinner during role detection
-
+    const checkRoleAndRedirect = async () => {
+      setLoading(true);
+  
       const account = accounts[0];
-      const roles: string[] | undefined = account.idTokenClaims?.roles;
+      const token = account.idToken;
+      if (!token) {
+        console.error("Missing ID token");
+        router.push("/unauthorized");
+        return;
+      }
+      sessionStorage.setItem("id_token", token);
 
-      // Simulate slight delay (optional UX polish)
-      setTimeout(() => {
-        if (roles?.includes("Manager")) {
-          router.push("/manager");
-        } else if (roles?.includes("Technician")) {
-          router.push("/technician");
-        } else if (roles?.includes("Chemist")) {
-          router.push("/chemist");
-        } else {
-          router.push("/unauthorized");
-        }
-      }, 2000); // 300ms to allow spinner to visibly show
+      try {
+        const res = await fetch("/api/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const data = await res.json();
+  
+        setTimeout(() => {
+          if (data.role === "Manager") {
+            router.push("/manager");
+          } else if (data.role === "Technician") {
+            router.push("/technician");
+          } else if (data.role === "Chemist") {
+            router.push("/chemist");
+          } else {
+            router.push("/unauthorized");
+          }
+        }, 1000); // spinner UX
+  
+      } catch (err) {
+        console.error("Role check failed:", err);
+        router.push("/unauthorized");
+      }
+    };
+  
+    if (accounts.length > 0) {
+      checkRoleAndRedirect();
     }
   }, [accounts]);
-
+  
   return (
     <>
       {loading && <LoggingLoadingSpinner />}

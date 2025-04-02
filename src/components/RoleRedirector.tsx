@@ -1,30 +1,21 @@
 'use client';
 
 import { useEffect } from "react";
-import { useMsal } from "@azure/msal-react";
 import { useRouter } from "next/navigation";
+import { useCosmosRole } from "@/hooks/useCosmosRole";
 
 export default function RoleRedirector() {
-  const { accounts } = useMsal();
   const router = useRouter();
+  const { role, loading } = useCosmosRole();
 
   useEffect(() => {
-    if (accounts.length > 0) {
-      const account = accounts[0];
-      const roles: string[] | undefined = account.idTokenClaims?.roles;
+    if (loading) return;
 
-      if (roles?.includes("Manager")) {
-        router.push("/manager");
-      } else if (roles?.includes("Technician")) {
-        router.push("/technician");
-      } else if (roles?.includes("Chemist")) {
-        router.push("/chemist");
-      } else {
-        // fallback or unauthorized screen
-        router.push("/unauthorized");
-      }
-    }
-  }, [accounts]);
+    if (role === "Manager") router.push("/manager");
+    else if (role === "Technician") router.push("/technician");
+    else if (role === "Chemist") router.push("/chemist");
+    else router.push("/unauthorized");
+  }, [role, loading]);
 
   return null;
 }
