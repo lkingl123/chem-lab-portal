@@ -9,25 +9,50 @@ import LoggingLoadingSpinner from "@/components/LoggingLoadingSpinner";
 export default function Home() {
   const { instance, accounts } = useMsal();
   const router = useRouter();
-  const [loading, setLoading] = useState(false); // ✅ Spinner state
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = () => {
-    setLoading(true); // ✅ Show spinner before redirect
+    console.log("🔐 Login initiated");
+    sessionStorage.setItem("post_login", "true");
+    setLoading(true);
     instance.loginRedirect(loginRequest);
   };
 
   useEffect(() => {
     const checkRoleAndRedirect = async () => {
+      console.log("👀 Checking for account...");
       setLoading(true);
-  
+
       const account = accounts[0];
+      if (!account) {
+        console.log("✅ No MSAL account found, stopping spinner");
+        setLoading(false);
+        return;
+      }
+
+      console.log("👤 Account found:", account);
+
       const token = account.idToken;
       if (!token) {
-        console.error("Missing ID token");
+        console.warn("❌ No ID token found, redirecting to /unauthorized");
+        setLoading(false);
         router.push("/unauthorized");
         return;
       }
+
+      const postLoginFlag = sessionStorage.getItem("post_login");
+      console.log("🔁 post_login flag:", postLoginFlag);
+
+      if (!postLoginFlag) {
+        console.log("🚫 No post-login flag, skipping redirect");
+        setLoading(false);
+        return;
+      }
+
+      sessionStorage.removeItem("post_login");
       sessionStorage.setItem("id_token", token);
+
+      console.log("📡 Fetching role from /api/me");
 
       try {
         const res = await fetch("/api/me", {
@@ -35,32 +60,36 @@ export default function Home() {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         const data = await res.json();
-  
+        console.log("✅ Role data received:", data);
+
         setTimeout(() => {
           if (data.role === "Manager") {
+            console.log("➡️ Redirecting to /manager");
             router.push("/manager");
           } else if (data.role === "Technician") {
+            console.log("➡️ Redirecting to /technician");
             router.push("/technician");
           } else if (data.role === "Chemist") {
+            console.log("➡️ Redirecting to /chemist");
             router.push("/chemist");
           } else {
+            console.warn("❓ Role not recognized, redirecting to /unauthorized");
             router.push("/unauthorized");
           }
-        }, 1000); // spinner UX
-  
+        }, 1000);
       } catch (err) {
-        console.error("Role check failed:", err);
+        console.error("❌ Role check failed:", err);
+        setLoading(false);
         router.push("/unauthorized");
       }
     };
-  
-    if (accounts.length > 0) {
-      checkRoleAndRedirect();
-    }
+
+    console.log("📦 MSAL accounts on load:", accounts);
+    checkRoleAndRedirect();
   }, [accounts]);
-  
+
   return (
     <>
       {loading && <LoggingLoadingSpinner />}

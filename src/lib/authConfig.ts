@@ -5,6 +5,10 @@ export const msalConfig = {
       redirectUri: process.env.NEXT_PUBLIC_REDIRECT_URI,
       postLogoutRedirectUri: process.env.NEXT_PUBLIC_POST_LOGOUT_REDIRECT_URI,
     },
+    cache: {
+        cacheLocation: "localStorage", // ✅ Ensures session sticks (or change to "sessionStorage" for session-only)
+        storeAuthStateInCookie: false, // ✅ True if you have issues with IE
+      },
   };
   
   export const loginRequest = {
