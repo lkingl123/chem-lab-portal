@@ -4,25 +4,31 @@ import { usersCollection } from "@/lib/cosmos";
 
 export async function PATCH(req: Request) {
     const url = new URL(req.url);
-    const id = url.pathname.split("/").pop(); // Get the user ID from the URL
+    const id = url.pathname.split("/").pop();
   
     if (!id) {
-      return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
+      return NextResponse.json({ error: "Missing ID" }, { status: 400 });
     }
   
     const body = await req.json();
     const { role } = body;
   
     if (!role) {
-      return new Response(JSON.stringify({ error: "Missing role" }), { status: 400 });
+      return NextResponse.json({ error: "Missing role" }, { status: 400 });
     }
   
-    // 🔧 Upsert into Cosmos (assuming usersCollection is set up)
+    // ✅ Get existing user
+    const { resource: existingUser } = await usersCollection.item(id, id).read();
+  
+    if (!existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+  
+    // ✅ Upsert with full object (preserving displayName, email, etc.)
     await usersCollection.items.upsert({
-      id,
+      ...existingUser,
       role,
     });
   
-    return new Response(JSON.stringify({ success: true }));
+    return NextResponse.json({ success: true });
   }
-  

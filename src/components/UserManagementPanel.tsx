@@ -62,7 +62,6 @@ export default function UserManagementPanel() {
                   <option value="Manager">Manager</option>
                   <option value="Technician">Technician</option>
                   <option value="Chemist">Chemist</option>
-                  <option value="Default Access">Default Access</option>
                 </select>
               </td>
               <td className="p-2">

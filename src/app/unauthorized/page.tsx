@@ -14,7 +14,7 @@ export default function UnauthorizedPage() {
         </p>
         <button
           onClick={() => router.push("/")}
-          className="bg-blue-600 hover:bg-blue-700 transition-all text-white font-semibold px-6 py-2 rounded-lg shadow"
+          className="cursor-pointer bg-blue-600 hover:bg-blue-700 transition-all text-white font-semibold px-6 py-2 rounded-lg shadow"
         >
           🔐 Return to your Dashboard
         </button>
