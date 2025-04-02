@@ -39,11 +39,8 @@ export async function PATCH(
 }
 
 // ✅ DELETE: Remove a user from Cosmos DB only
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
+export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+    const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing ID" }, { status: 400 });
