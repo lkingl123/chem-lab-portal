@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SmallLoadingSpinner from "./SmallLoadingSpinner";
 
 interface User {
   id: string;
@@ -113,9 +114,7 @@ export default function UserManagementPanel() {
     <div className="relative bg-white p-6 rounded-xl shadow">
       {/* Spinner Overlay */}
       {loading && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        </div>
+        <SmallLoadingSpinner />
       )}
 
       <div className="flex justify-between items-center mb-4">
