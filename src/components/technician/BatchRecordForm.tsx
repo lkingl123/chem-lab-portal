@@ -21,7 +21,7 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
       batchNumber,
       notes,
       status: "InProgress",
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     try {
@@ -57,7 +57,57 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
         <p><strong>Batch Size:</strong> {formula.batchSize?.value} {formula.batchSize?.unit}</p>
       </div>
 
+      {/* INGREDIENTS BY PHASE */}
+      {formula.phases && (
+        <div className="bg-gray-50 border rounded-md p-3 mb-6">
+          <p className="font-semibold mb-2">🧪 Ingredients by Phase</p>
+          {Object.entries(formula.phases).map(([phaseKey, ingredients]) => (
+            <div key={phaseKey} className="mb-4">
+              <h4 className="font-semibold text-blue-700 mb-1">Phase {phaseKey}</h4>
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-1">Ingredient</th>
+                    <th className="p-1">INCI</th>
+                    <th className="p-1">Function</th>
+                    <th className="p-1">% w/w</th>
+                    <th className="p-1">Grams</th>
+                    <th className="p-1">Ounces</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ingredients.map((ing, idx) => (
+                    <tr key={idx} className="border-t">
+                      <td className="p-1">{ing.ingredient}</td>
+                      <td className="p-1">{ing.inci || "-"}</td>
+                      <td className="p-1">{ing.function || "-"}</td>
+                      <td className="p-1">{ing.percentage}%</td>
+                      <td className="p-1">{ing.grams}</td>
+                      <td className="p-1">{ing.ounces}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+      )}
 
+      {/* INSTRUCTIONS */}
+      {formula.instructions?.length > 0 && (
+        <div className="bg-gray-50 border rounded-md p-3 mb-6">
+          <p className="font-semibold mb-2">📋 Instructions</p>
+          <ol className="list-decimal list-inside text-sm text-gray-700 space-y-1">
+            {formula.instructions.map((step, index) => (
+              <li key={index}>
+                <strong>Phase {step.phase}:</strong> {step.text}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* BATCH NUMBER + NOTES */}
       <div className="space-y-4">
         <div>
           <label className="block font-medium">Batch Number</label>
@@ -78,19 +128,7 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
           />
         </div>
 
-        {formula.instructions?.length > 0 && (
-          <div className="bg-gray-50 border rounded-md p-3">
-            <p className="font-semibold mb-2">📋 Instructions</p>
-            <ol className="list-decimal list-inside text-sm text-gray-700 space-y-1">
-              {formula.instructions.map((step, index) => (
-                <li key={index}>
-                  <strong>Phase {step.phase}:</strong> {step.text}
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
+        {/* ACTION BUTTONS */}
         <div className="flex gap-4 mt-4">
           <button
             onClick={handleSubmit}
