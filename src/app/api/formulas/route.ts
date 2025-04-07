@@ -9,15 +9,16 @@ if (!connectionString) {
 }
 
 const client = new CosmosClient(connectionString!);
-
-const databaseId = "labportal";
-const containerId = "formulas";
+const container = client.database("labportal").container("formulas");
 
 export async function GET() {
   try {
-    const container = client.database(databaseId).container(containerId);
-    const query = "SELECT * FROM c";
-    const { resources } = await container.items.query(query).fetchAll();
+    const { resources } = await container.items
+      .query("SELECT * FROM c") // ⚠️ Make sure this is not SELECT c.id, c.name, etc.
+      .fetchAll();
+
+    // Log what you're returning
+    console.log("✅ Full formulas from DB:", resources);
 
     return NextResponse.json(resources);
   } catch (error: any) {

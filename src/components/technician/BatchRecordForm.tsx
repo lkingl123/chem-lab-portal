@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type Formula = {
-  id: string;
-  name: string;
-};
+import type { Formula } from "../../app/types/formula";
 
 type Props = {
   formula: Formula;
@@ -21,8 +17,11 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
     const record = {
       formulaId: formula.id,
       formulaName: formula.name,
+      formulaNumber: formula.formulaNumber,
       batchNumber,
       notes,
+      status: "InProgress",
+      createdAt: new Date().toISOString()
     };
 
     try {
@@ -36,8 +35,8 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
 
       if (res.ok) {
         alert("✅ Batch record saved!");
-        onSave();    // ⬅️ Refresh batch list
-        onCancel();  // ⬅️ Close form
+        onSave();
+        onCancel();
       } else {
         alert(`❌ Failed to save batch: ${result.error}`);
       }
@@ -52,6 +51,13 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
       <h2 className="text-xl font-semibold mb-4">
         🧾 Start Batch for: {formula.name}
       </h2>
+
+      <div className="mb-4 text-sm text-gray-600">
+        <p><strong>Formula Number:</strong> {formula.formulaNumber}</p>
+        <p><strong>Batch Size:</strong> {formula.batchSize?.value} {formula.batchSize?.unit}</p>
+      </div>
+
+
       <div className="space-y-4">
         <div>
           <label className="block font-medium">Batch Number</label>
@@ -61,6 +67,7 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
             className="w-full border p-2 rounded mt-1"
           />
         </div>
+
         <div>
           <label className="block font-medium">Notes</label>
           <textarea
@@ -70,7 +77,21 @@ const BatchRecordForm = ({ formula, onCancel, onSave }: Props) => {
             rows={4}
           />
         </div>
-        <div className="flex gap-4">
+
+        {formula.instructions?.length > 0 && (
+          <div className="bg-gray-50 border rounded-md p-3">
+            <p className="font-semibold mb-2">📋 Instructions</p>
+            <ol className="list-decimal list-inside text-sm text-gray-700 space-y-1">
+              {formula.instructions.map((step, index) => (
+                <li key={index}>
+                  <strong>Phase {step.phase}:</strong> {step.text}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        <div className="flex gap-4 mt-4">
           <button
             onClick={handleSubmit}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

@@ -6,12 +6,7 @@ import LogoutButton from "@/components/LogoutButton";
 import ApprovedFormulaList from "@/components/technician/ApprovedFormulaList";
 import BatchRecordForm from "@/components/technician/BatchRecordForm";
 import InProgressBatches from "@/components/technician/InProgressBatches";
-
-type Formula = {
-  id: string;
-  name: string;
-  status: string;
-};
+import type { Formula } from "../../app/types/formula"; // ✅ Import correct type
 
 function TechnicianDashboardBase() {
   const [selectedFormula, setSelectedFormula] = useState<Formula | null>(null);

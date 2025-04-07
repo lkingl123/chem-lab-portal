@@ -6,8 +6,9 @@ import SmallLoadingSpinner from "@/components/SmallLoadingSpinner";
 type Batch = {
   id: string;
   formulaName: string;
+  formulaNumber: string;
   batchNumber: string;
-  status: string;
+  status: "InProgress" | "Completed" | "Aborted";
 };
 
 const InProgressBatches = ({ refreshKey }: { refreshKey: boolean }) => {
@@ -19,7 +20,8 @@ const InProgressBatches = ({ refreshKey }: { refreshKey: boolean }) => {
       setLoading(true);
       const res = await fetch("/api/batches");
       const data = await res.json();
-      setBatches(data.filter((b: Batch) => b.status === "InProgress"));
+      const active = data.filter((b: Batch) => b.status === "InProgress");
+      setBatches(active);
     } catch (err) {
       console.error("Failed to fetch batches", err);
     } finally {
@@ -36,7 +38,7 @@ const InProgressBatches = ({ refreshKey }: { refreshKey: boolean }) => {
 
     const result = await res.json();
     if (res.ok) {
-      alert(`Batch ${status.toLowerCase()}!`);
+      alert(`✅ Batch marked as ${status}`);
       fetchBatches();
     } else {
       alert(`❌ Error: ${result.error}`);
@@ -59,14 +61,14 @@ const InProgressBatches = ({ refreshKey }: { refreshKey: boolean }) => {
         <ul className="space-y-4">
           {batches.map((batch) => (
             <li key={batch.id} className="border p-3 rounded-md">
-              <div className="flex justify-between items-center">
-                <div>
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
                   <h3 className="text-lg font-bold">{batch.formulaName}</h3>
-                  <p className="text-sm text-gray-600">
-                    Batch: {batch.batchNumber}
-                  </p>
+                  <p className="text-sm text-gray-600">Formula #: {batch.formulaNumber}</p>
+                  <p className="text-sm text-gray-600">Batch #: {batch.batchNumber}</p>
+                  <p className="text-sm text-blue-500">Status: {batch.status}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <button
                     onClick={() => updateStatus(batch.id, "Completed")}
                     className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
