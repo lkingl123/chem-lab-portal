@@ -1,4 +1,4 @@
-// /api/products/[id]/route.ts
+// src/app/api/products/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { CosmosClient } from "@azure/cosmos";
@@ -7,13 +7,15 @@ const connectionString = process.env.COSMOS_CONNECTION_STRING!;
 const client = new CosmosClient(connectionString);
 const container = client.database("labportal").container("products");
 
-// PATCH route
-export async function PATCH(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+function extractIdFromUrl(url: string): string {
+  const segments = url.split("/");
+  return segments[segments.length - 1];
+}
+
+// PATCH: Update a product
+export async function PATCH(req: NextRequest) {
   try {
-    const id = context.params.id;
+    const id = extractIdFromUrl(req.nextUrl.pathname);
     const body = await req.json();
 
     const { resource: existing } = await container.item(id, id).read();
@@ -36,13 +38,10 @@ export async function PATCH(
   }
 }
 
-// ✅ FIXED DELETE route
-export async function DELETE(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+// DELETE: Remove a product
+export async function DELETE(req: NextRequest) {
   try {
-    const id = context.params.id;
+    const id = extractIdFromUrl(req.nextUrl.pathname);
     await container.item(id, id).delete();
     return NextResponse.json({ success: true });
   } catch (err: any) {
