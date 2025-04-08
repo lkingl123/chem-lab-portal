@@ -1,5 +1,3 @@
-// /api/products/[id]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { CosmosClient } from "@azure/cosmos";
 
@@ -7,14 +5,14 @@ const client = new CosmosClient(process.env.COSMOS_CONNECTION_STRING!);
 const database = client.database("labportal");
 const container = database.container("products");
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+// PATCH: Update product
+export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
+  const id = context.params.id;
   const body = await req.json();
 
   try {
-    const { resource: existing } = await container.item(id, id).read(); // Ensure 'id' matches the Cosmos `id`
+    const { resource: existing } = await container.item(id, id).read();
     const updated = { ...existing, ...body };
-
     const { resource } = await container.items.upsert(updated);
     return NextResponse.json(resource);
   } catch (err: any) {
@@ -23,11 +21,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-
 // DELETE: Delete product
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, context: { params: { id: string } }) {
+  const id = context.params.id;
+
   try {
-    await container.item(params.id, params.id).delete();
+    await container.item(id, id).delete();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE error:", error);
