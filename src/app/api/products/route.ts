@@ -24,7 +24,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log("📥 POST body:", body);
 
-    const { resource: created } = await container.items.create(body);
+    // Force id to match productId
+    const product = {
+      ...body,
+      id: body.productId,
+      createdAt: new Date().toISOString(),
+    };
+
+    const { resource: created } = await container.items.create(product);
     console.log("✅ Created product:", created);
 
     return NextResponse.json(created);
