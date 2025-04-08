@@ -7,15 +7,10 @@ const connectionString = process.env.COSMOS_CONNECTION_STRING!;
 const client = new CosmosClient(connectionString);
 const container = client.database("labportal").container("products");
 
-function extractIdFromUrl(url: string): string {
-  const segments = url.split("/");
-  return segments[segments.length - 1];
-}
-
 // PATCH: Update a product
-export async function PATCH(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: any) {
   try {
-    const id = extractIdFromUrl(req.nextUrl.pathname);
+    const id = params.id;
     const body = await req.json();
 
     const { resource: existing } = await container.item(id, id).read();
@@ -39,9 +34,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 // DELETE: Remove a product
-export async function DELETE(req: NextRequest) {
+export async function DELETE(req: NextRequest, { params }: any) {
   try {
-    const id = extractIdFromUrl(req.nextUrl.pathname);
+    const id = params.id;
     await container.item(id, id).delete();
     return NextResponse.json({ success: true });
   } catch (err: any) {
