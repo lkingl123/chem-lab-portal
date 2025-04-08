@@ -1,3 +1,5 @@
+// src/app/api/products/[id]/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { CosmosClient } from "@azure/cosmos";
 
@@ -10,13 +12,22 @@ function extractIdFromUrl(url: string): string {
   return clean.split("/").pop()!;
 }
 
-// PATCH
+// PATCH: Update a product by productId (not internal Cosmos `id`)
 export async function PATCH(req: NextRequest) {
   try {
-    const id = extractIdFromUrl(req.nextUrl.pathname);
+    const productId = extractIdFromUrl(req.nextUrl.pathname);
     const body = await req.json();
 
-    const { resource: existing } = await container.item(id, id).read();
+    // Query to find product by productId field
+    const query = `SELECT * FROM c WHERE c.productId = @productId`;
+    const { resources } = await container.items
+      .query({
+        query,
+        parameters: [{ name: "@productId", value: productId }],
+      })
+      .fetchAll();
+
+    const existing = resources[0];
 
     if (!existing) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -36,11 +47,26 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// DELETE
+// DELETE: Remove a product by productId
 export async function DELETE(req: NextRequest) {
   try {
-    const id = extractIdFromUrl(req.nextUrl.pathname);
-    await container.item(id, id).delete();
+    const productId = extractIdFromUrl(req.nextUrl.pathname);
+
+    const query = `SELECT * FROM c WHERE c.productId = @productId`;
+    const { resources } = await container.items
+      .query({
+        query,
+        parameters: [{ name: "@productId", value: productId }],
+      })
+      .fetchAll();
+
+    const existing = resources[0];
+
+    if (!existing) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    await container.item(existing.id, existing.id).delete();
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("DELETE error:", err.message);
