@@ -1,3 +1,4 @@
+// src/app/ManagerDashboard.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,6 +11,30 @@ interface User {
   role: string;
 }
 
+interface Product {
+  productId: string;
+  productName: string;
+  marketing: {
+    productHighlights: string[];
+    productDescription: {
+      short: string;
+      full: string;
+    };
+    keyIngredients: {
+      name: string;
+      benefits: string;
+      imageUrl: string;
+    }[];
+    ingredientList?: {
+      name: string;
+      inci: string;
+      percentage: number;
+      purpose: string;
+    }[];
+    ingredientsList?: string;
+  };
+}
+
 export default function UserManagementPanel() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +44,12 @@ export default function UserManagementPanel() {
   const [inviteDisplayName, setInviteDisplayName] = useState("");
   const [inviteRole, setInviteRole] = useState("Technician");
   const [isInviting, setIsInviting] = useState(false);
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editJson, setEditJson] = useState<string>("");
+  const [openProductId, setOpenProductId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -33,12 +64,15 @@ export default function UserManagementPanel() {
     }
   };
 
+
   useEffect(() => {
     fetchUsers();
+    fetchProducts();
   }, []);
 
   const updateRole = async (userId: string, newRole: string) => {
     setLoadingUserId(userId);
+
     const res = await fetch(`/api/users/${userId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -70,6 +104,65 @@ export default function UserManagementPanel() {
     } else {
       const err = await res.json();
       alert(`❌ Failed to remove user: ${err.error || "Unknown error"}`);
+    }
+  };
+
+
+  const fetchProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      setProducts(data);
+    } catch (err) {
+      console.error("❌ Failed to load products");
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setEditJson(JSON.stringify(product, null, 2));
+  };
+
+  const handleSave = async () => {
+    if (!editingProduct) return;
+
+    try {
+      const parsed = JSON.parse(editJson);
+      const res = await fetch(`/api/products/${editingProduct.productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        alert("✅ Product updated");
+        setProducts((prev) =>
+          prev.map((p) => (p.productId === updated.productId ? updated : p))
+        );
+        setEditingProduct(null);
+      } else {
+        alert("❌ Failed to update product");
+      }
+    } catch (err) {
+      alert("❌ Invalid JSON format");
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    const confirmed = confirm("Are you sure you want to delete this product?");
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
+
+    if (res.ok) {
+      alert("🗑️ Product deleted");
+      setProducts((prev) => prev.filter((p) => p.productId !== productId));
+    } else {
+      alert("❌ Failed to delete product");
     }
   };
 
@@ -142,7 +235,7 @@ export default function UserManagementPanel() {
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
+        {users.map((u) => (
             <tr key={u.id} className="border-b hover:bg-gray-50">
               <td className="p-2">{u.displayName}</td>
               <td className="p-2">{u.email}</td>
@@ -172,7 +265,104 @@ export default function UserManagementPanel() {
         </tbody>
       </table>
 
-      {/* Invite Modal */}
+
+      <h2 className="text-2xl font-semibold mb-4 mt-12">🧪 Product Marketing Overview</h2>
+      {loadingProducts ? (
+        <SmallLoadingSpinner />
+      ) : (
+        <div className="grid gap-6">
+          {products.map((product) => (
+            <div
+              key={product.productId}
+              className="p-6 border rounded-xl shadow space-y-4"
+              style={{ overflow: 'visible', maxHeight: 'none', height: 'auto' }}
+            >
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold">{product.productName}</h3>
+                <div className="space-x-2">
+                  <button
+                    onClick={() => setOpenProductId((id) => id === product.productId ? null : product.productId)}
+                    className="text-sm text-gray-700 hover:underline"
+                  >
+                    {openProductId === product.productId ? "Hide" : "View All"}
+                  </button>
+                  <button
+                    onClick={() => handleEditClick(product)}
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.productId)}
+                    className="text-red-600 hover:underline text-sm"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+
+              {openProductId === product.productId && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-semibold mb-1">Product Description:</h4>
+                    <p className="text-sm text-gray-800 whitespace-pre-line">
+                      {product.marketing.productDescription.full}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-1">Product Highlights:</h4>
+                    <ul className="list-disc list-inside text-sm text-gray-800">
+                      {product.marketing.productHighlights.map((highlight, i) => (
+                        <li key={i}>{highlight}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-1">Key Ingredients:</h4>
+                    <ul className="list-disc list-inside text-sm text-gray-800">
+                      {product.marketing.keyIngredients.map((ing, i) => (
+                        <li key={i}>{ing.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {product.marketing.ingredientList && (
+                    <div>
+                      <h4 className="font-semibold mb-1">Ingredient List:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-800">
+                        {product.marketing.ingredientList
+                          .slice()
+                          .sort((a, b) => b.percentage - a.percentage)
+                          .map((ing, i) => (
+                            <li key={i}>
+                              <strong>{ing.inci}</strong> ({ing.name}) – {ing.percentage}% ({ing.purpose})
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {product.marketing.ingredientsList && (
+                    <div>
+                      <h4 className="font-semibold mb-1">Ingredients:</h4>
+                      <p className="text-xs italic text-gray-600 mb-1">
+                        Please note that ingredient lists are subject to change and may vary over time.
+                      </p>
+                      <p className="text-sm text-gray-800 whitespace-pre-line">
+                        {product.marketing.ingredientsList}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* INVITE MODAL */}
       {showInvite && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
@@ -217,6 +407,36 @@ export default function UserManagementPanel() {
                 disabled={isInviting}
               >
                 {isInviting ? "Sending..." : "Send Invite"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FULL JSON EDIT MODAL */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 shadow-xl max-w-2xl w-full">
+            <h3 className="text-lg font-semibold mb-4">✏️ Edit Product JSON</h3>
+            <pre className="text-xs text-gray-400 mb-1">Product ID: {editingProduct.productId}</pre>
+            <textarea
+              value={editJson}
+              onChange={(e) => setEditJson(e.target.value)}
+              className="w-full border p-3 rounded h-96 font-mono text-sm mb-4"
+              placeholder="Paste full JSON here"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setEditingProduct(null)}
+                className="px-4 py-2 text-gray-600 hover:underline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Save
               </button>
             </div>
           </div>
