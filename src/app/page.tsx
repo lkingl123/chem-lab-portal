@@ -99,7 +99,7 @@ export default function Home() {
             <div className="flex items-center space-x-3">
               <div className="text-5xl">🧫</div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 tracking-tight">
-                Chem Lab Portal
+                Chem Lab Portal Dev
               </h1>
             </div>
 
