@@ -17,7 +17,7 @@ export type Instruction = {
 export type Formula = {
   id: string;
   name: string;
-  formulaNumber: string; 
+  formulaNumber: string;
   analogousFormula: string;
   approvedBy: string;
   approvedDescriptionsBy: string;
