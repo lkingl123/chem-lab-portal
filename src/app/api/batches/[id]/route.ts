@@ -9,7 +9,8 @@ export async function PATCH(req: NextRequest, { params }: any) {
   try {
     const id = params.id;
     const body = await req.json();
-    const { status } = body;
+
+    const { status, completedBy, completedAt, completionNotes, abortedAt } = body;
 
     if (!["Completed", "Aborted"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -25,13 +26,15 @@ export async function PATCH(req: NextRequest, { params }: any) {
       ...existingBatch,
       status,
       updatedAt: new Date().toISOString(),
+      ...(status === "Completed" && {
+        completedAt: completedAt || new Date().toISOString(),
+        completedBy,
+        completionNotes: completionNotes || null,
+      }),
+      ...(status === "Aborted" && {
+        abortedAt: abortedAt || new Date().toISOString(),
+      }),
     };
-
-    if (status === "Completed") {
-      updated.completedAt = new Date().toISOString();
-    } else if (status === "Aborted") {
-      updated.abortedAt = new Date().toISOString();
-    }
 
     await container.items.upsert(updated);
 

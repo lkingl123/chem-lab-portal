@@ -1,24 +1,26 @@
+// types/formula.ts
+
 export type PhaseKey = "A" | "A'" | "B" | "C" | "D";
 
 export type Ingredient = {
-  ingredient: string;
+  name: string;
   inci: string;
   function: string;
   percentage: number;
-  grams: number;
-  ounces: number;
 };
 
-export type Instruction = {
-  phase: PhaseKey;
-  text: string;
+export type Phase = {
+  phaseId: PhaseKey;
+  instructions: string;
+  ingredients: Ingredient[];
 };
 
 export type Formula = {
-  id: string;
-  name: string;
+  id: string; // Same as productInfo.id
+  name: string; // productInfo.productName
   formulaNumber: string;
   analogousFormula: string;
+  formulaType: string;
   approvedBy: string;
   approvedDescriptionsBy: string;
   approvedDate: string;
@@ -28,7 +30,10 @@ export type Formula = {
     value: number;
     unit: string;
   };
-  phases: Record<PhaseKey, Ingredient[]>;
-  instructions: Instruction[];
+  phases: Phase[];
+  instructions: {
+    phase: PhaseKey;
+    text: string;
+  }[];
   lastModified: string;
 };

@@ -104,7 +104,7 @@ export default function Home() {
             </div>
 
             <p className="text-gray-500 text-center text-sm md:text-base max-w-md">
-              Accountability, Logging, and Transparency for Chem Lab Teams.
+              Accountability, Logging, and Transparency for Chem Lab Teams. 
               Manage formulas, batch records, and team workflows in a unified lab dashboard.
             </p>
 
