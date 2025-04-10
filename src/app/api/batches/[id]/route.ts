@@ -45,18 +45,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+function extractIdFromUrl(url: string): string {
+  const clean = url.split("?")[0].replace(/\/$/, "");
+  return clean.split("/").pop()!;
+}
 
+export async function DELETE(req: NextRequest) {
   try {
-    // Since /id is the partition key, just use id for both
+    const id = extractIdFromUrl(req.nextUrl.pathname); // Extract the id from the URL
+
     const { resource: batch } = await container.item(id, id).read();
 
     if (!batch) {
       return NextResponse.json({ error: "Batch not found" }, { status: 404 });
     }
 
-    await container.item(id, id).delete();
+    await container.item(id, id).delete(); // Delete the batch item by id
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
