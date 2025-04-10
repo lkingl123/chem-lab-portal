@@ -11,6 +11,7 @@ export interface BatchIngredient {
   }
   
   export interface BatchRecord {
+    id:string;
     batchId: string;
     formulaId: string;
     formulaName: string;
@@ -22,8 +23,8 @@ export interface BatchIngredient {
     createdBy: string;
     createdAt: string;
   
-    status: "Unassigned" | "In Progress" | "Completed";
-  
+    status: "NotStarted" | "Unassigned" | "In Progress" | "InProgress" | "Completed" | "Aborted";
+
     assignedTo: string | null;
     assignedAt: string | null;
     assignedBy: string | null;

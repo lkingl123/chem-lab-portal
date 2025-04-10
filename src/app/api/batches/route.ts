@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       id,
       ...body,
       createdAt: new Date().toISOString(),
-      status: "InProgress",
+      status: "NotStarted",
     };
 
     await container.items.create(batch);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMsal } from "@azure/msal-react";
 import type { BatchRecord, BatchPhase, BatchIngredient } from "../../app/types/batches";
 
@@ -16,19 +16,30 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
 
   const [notes, setNotes] = useState("");
 
+  useEffect(() => {
+    // Mark as InProgress when opened if currently NotStarted
+    if (batch.status === "NotStarted") {
+      fetch(`/api/batches/${batch.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "InProgress" }),
+      });
+    }
+  }, [batch]);
+
   const handleSubmit = async () => {
     const patch = {
       completedBy: userEmail,
       completedAt: new Date().toISOString(),
       completionNotes: notes,
-      status: "Completed"
+      status: "Completed",
     };
 
     try {
-      const res = await fetch(`/api/batches/${batch.batchId}`, {
+      const res = await fetch(`/api/batches/${batch.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch)
+        body: JSON.stringify(patch),
       });
 
       if (res.ok) {
@@ -47,14 +58,28 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
   return (
     <div className="bg-white shadow-md p-4 rounded-lg">
       <h2 className="text-xl font-semibold mb-4">
-        ✅ Complete Batch: {batch.batchId}
+        {batch.batchId}
       </h2>
 
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-gray-600 space-y-1">
         <p><strong>Formula:</strong> {batch.formulaName}</p>
         <p><strong>Weight:</strong> {batch.targetWeightKg} kg</p>
         <p><strong>Created By:</strong> {batch.createdBy}</p>
         <p><strong>You:</strong> {userEmail}</p>
+        <p>
+          <strong>Status:</strong>{" "}
+          <span className={`px-2 py-1 rounded text-xs ${
+            batch.status === "Completed"
+              ? "bg-green-100 text-green-800"
+              : batch.status === "InProgress"
+              ? "bg-yellow-100 text-yellow-800"
+              : batch.status === "Aborted"
+              ? "bg-red-100 text-red-800"
+              : "bg-gray-200 text-gray-700"
+          }`}>
+            {batch.status}
+          </span>
+        </p>
       </div>
 
       {/* INGREDIENTS BY PHASE */}
