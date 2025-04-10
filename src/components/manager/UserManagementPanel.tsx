@@ -112,7 +112,7 @@ export default function UserManagementPanel() {
   };
 
   return (
-    <div className="mt-8">
+    <div className="mt-1">
       {/* Dropdown Header */}
       <button
         onClick={() => setExpanded((prev) => !prev)}

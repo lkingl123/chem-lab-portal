@@ -75,7 +75,7 @@ export default function ProductManagementPanel() {
   }, [expanded]);
 
   return (
-    <div className="mt-12">
+    <div className="mt-1">
       {/* Dropdown Header */}
       <button
         onClick={() => setExpanded((prev) => !prev)}
