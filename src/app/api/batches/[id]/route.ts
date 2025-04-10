@@ -45,8 +45,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params;
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const { id } = params;
 
   try {
     // Since /id is the partition key, just use id for both
@@ -56,7 +56,7 @@ export async function DELETE(req: NextRequest, context: { params: { id: string }
       return NextResponse.json({ error: "Batch not found" }, { status: 404 });
     }
 
-    await container.item(id, id).delete(); 
+    await container.item(id, id).delete();
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
