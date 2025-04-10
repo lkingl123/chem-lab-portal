@@ -5,10 +5,15 @@ const connectionString = process.env.COSMOS_CONNECTION_STRING!;
 const client = new CosmosClient(connectionString);
 const container = client.database("labportal").container("batches");
 
+
+function extractIdFromUrl(url: string): string {
+  const clean = url.split("?")[0].replace(/\/$/, "");
+  return clean.split("/").pop()!;
+}
 // PATCH (Already present)
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest) {
   try {
-    const id = params.id;
+    const id = extractIdFromUrl(req.nextUrl.pathname); // Extract the id from the URL
     const body = await req.json();
 
     const { status, completedBy, completedAt, completionNotes, abortedAt } = body;
@@ -45,10 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-function extractIdFromUrl(url: string): string {
-  const clean = url.split("?")[0].replace(/\/$/, "");
-  return clean.split("/").pop()!;
-}
+
 
 export async function DELETE(req: NextRequest) {
   try {
