@@ -75,10 +75,10 @@ export default function BatchManagementPanel() {
       alert("❌ Please fill out all fields.");
       return;
     }
-
+  
     const formula = formulas.find((f) => f.id === selectedFormulaId);
     if (!formula) return;
-
+  
     const payload: Partial<BatchRecord> = {
       batchId,
       formulaId: formula.id,
@@ -106,7 +106,7 @@ export default function BatchManagementPanel() {
         })),
       })),
     };
-
+  
     setIsCreating(true);
     const res = await fetch("/api/batches", {
       method: "POST",
@@ -114,8 +114,26 @@ export default function BatchManagementPanel() {
       body: JSON.stringify(payload),
     });
     setIsCreating(false);
-
+  
     if (res.ok) {
+      // Log the batch creation event immediately after successful creation
+      const timestamp = new Date().toISOString();
+      try {
+        await fetch("/api/batchEvents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            batchId,
+            eventType: "Created",
+            triggeredBy: currentUser,
+            timestamp,
+          }),
+        });
+        console.log("✔ Created event logged successfully");
+      } catch (err) {
+        console.error("❌ Failed to log Created event", err);
+      }
+  
       alert("✅ Batch created");
       setBatchId("");
       setTargetWeight(1);
@@ -139,14 +157,13 @@ export default function BatchManagementPanel() {
         return;
       }
   
-      alert("✅ Batch deleted");
-      fetchBatches(); // refresh
+      console.log(`Batch with id: ${id} successfully deleted.`);
+      fetchBatches(); // Refresh batches list
     } catch (err) {
       console.error("❌ Delete error:", err);
       alert("❌ Failed to delete batch");
     }
   };
-  
 
   return (
     <div className="mt-1">
