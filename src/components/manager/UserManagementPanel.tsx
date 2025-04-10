@@ -19,7 +19,7 @@ export default function UserManagementPanel() {
   const [inviteDisplayName, setInviteDisplayName] = useState("");
   const [inviteRole, setInviteRole] = useState("Technician");
   const [isInviting, setIsInviting] = useState(false);
-  const [expanded, setExpanded] = useState<boolean>(true);
+  const [expanded, setExpanded] = useState<boolean>(false);
 
   useEffect(() => {
     if (expanded) fetchUsers();
