@@ -1,17 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useMsal } from "@azure/msal-react";
 import { Formula } from "../../app/types/formula";
 import { BatchRecord } from "../../app/types/batches";
+import SmallLoadingSpinner from "../SmallLoadingSpinner";
 
 export default function BatchManagementPanel() {
+  const { accounts } = useMsal();
+  const currentUser = accounts[0]?.username || "unknown";
+
   const [formulas, setFormulas] = useState<Formula[]>([]);
   const [selectedFormulaId, setSelectedFormulaId] = useState("");
   const [batchId, setBatchId] = useState("");
   const [targetWeight, setTargetWeight] = useState<number>(1);
   const [isCreating, setIsCreating] = useState(false);
   const [batches, setBatches] = useState<BatchRecord[]>([]);
-  const [expanded, setExpanded] = useState<boolean>(false); // dropdown toggle
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const [loadingData, setLoadingData] = useState<boolean>(false);
 
   useEffect(() => {
     if (expanded) {
@@ -21,6 +27,7 @@ export default function BatchManagementPanel() {
   }, [expanded]);
 
   const fetchApprovedFormulas = async () => {
+    setLoadingData(true);
     const res = await fetch("/api/formulas");
     const data = await res.json();
     const approved = data.filter((p: any) => p.productInfo?.status === "Approved");
@@ -47,13 +54,15 @@ export default function BatchManagementPanel() {
         lastModified: p.productInfo.lastModified || "",
       }))
     );
+    setLoadingData(false);
   };
 
   const fetchBatches = async () => {
+    setLoadingData(true);
     const res = await fetch("/api/batches");
     const data = await res.json();
-    console.log("🧪 Loaded batches:", data);
     setBatches(data.reverse());
+    setLoadingData(false);
   };
 
   const createBatch = async () => {
@@ -74,6 +83,7 @@ export default function BatchManagementPanel() {
       approvedDate: formula.approvedDate,
       targetWeightKg: targetWeight,
       createdBy: formula.createdBy || "unknown",
+      assignedBy: currentUser,
       createdAt: new Date().toISOString(),
       status: "Unassigned",
       assignedTo: null,
@@ -103,7 +113,7 @@ export default function BatchManagementPanel() {
     if (res.ok) {
       alert("✅ Batch created");
       setBatchId("");
-      setTargetWeight(20);
+      setTargetWeight(1);
       setSelectedFormulaId("");
       fetchBatches();
     } else {
@@ -113,7 +123,6 @@ export default function BatchManagementPanel() {
 
   return (
     <div className="mt-1">
-      {/* Dropdown Header */}
       <button
         onClick={() => setExpanded((prev) => !prev)}
         className="w-full text-left bg-gray-100 border border-gray-300 rounded-md px-4 py-3 font-semibold text-lg hover:bg-gray-200 transition"
@@ -122,74 +131,79 @@ export default function BatchManagementPanel() {
         <span className="float-right text-gray-500">{expanded ? "▼" : "▲"}</span>
       </button>
 
-      {/* Dropdown Body */}
       {expanded && (
         <div className="mt-6 p-4 bg-white rounded-lg shadow space-y-6">
-          {/* Create Batch Form */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Batch ID"
-              value={batchId}
-              onChange={(e) => setBatchId(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-            <select
-              value={selectedFormulaId}
-              onChange={(e) => setSelectedFormulaId(e.target.value)}
-              className="border p-2 rounded w-full"
-            >
-              <option value="">Select Formula</option>
-              {formulas.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min={1}
-              placeholder="Target Weight (kg)"
-              value={targetWeight}
-              onChange={(e) => setTargetWeight(Number(e.target.value))}
-              className="border p-2 rounded w-full"
-            />
-          </div>
+          {loadingData ? (
+            <div className="flex justify-center py-8">
+              <SmallLoadingSpinner />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  placeholder="Batch ID"
+                  value={batchId}
+                  onChange={(e) => setBatchId(e.target.value)}
+                  className="border p-2 rounded w-full"
+                />
+                <select
+                  value={selectedFormulaId}
+                  onChange={(e) => setSelectedFormulaId(e.target.value)}
+                  className="border p-2 rounded w-full"
+                >
+                  <option value="">Select Formula</option>
+                  {formulas.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="Target Weight (kg)"
+                  value={targetWeight}
+                  onChange={(e) => setTargetWeight(Number(e.target.value))}
+                  className="border p-2 rounded w-full"
+                />
+              </div>
 
-          <button
-            onClick={createBatch}
-            disabled={isCreating}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow"
-          >
-            {isCreating ? "Creating..." : "➕ Create Batch"}
-          </button>
+              <button
+                onClick={createBatch}
+                disabled={isCreating}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center justify-center"
+              >
+                {isCreating ? <SmallLoadingSpinner /> : "➕ Create Batch"}
+              </button>
 
-          {/* Batch List */}
-          <div>
-            <h3 className="text-xl font-semibold mt-8 mb-2">📃 Existing Batches</h3>
-            {batches.length === 0 ? (
-              <p className="text-sm text-gray-600 italic">No batches yet.</p>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {batches.map((b, idx) => (
-                  <li
-                    key={b.batchId || `batch-${idx}`}
-                    className="border p-3 rounded bg-gray-50 flex justify-between items-center"
-                  >
-                    <span>
-                      <strong>{b.batchId}</strong> — {b.formulaName} —{" "}
-                      <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
-                        {b.status}
-                      </span>
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Created: {new Date(b.createdAt).toLocaleDateString()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+              <div>
+                <h3 className="text-xl font-semibold mt-8 mb-2">📃 Existing Batches</h3>
+                {batches.length === 0 ? (
+                  <p className="text-sm text-gray-600 italic">No batches yet.</p>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {batches.map((b, idx) => (
+                      <li
+                        key={b.batchId || `batch-${idx}`}
+                        className="border p-3 rounded bg-gray-50 flex justify-between items-center"
+                      >
+                        <span>
+                          <strong>{b.batchId}</strong> — {b.formulaName} —{" "}
+                          <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
+                            {b.status}
+                          </span>
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Created: {new Date(b.createdAt).toLocaleDateString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

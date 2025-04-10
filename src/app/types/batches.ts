@@ -26,6 +26,7 @@ export interface BatchIngredient {
   
     assignedTo: string | null;
     assignedAt: string | null;
+    assignedBy: string | null;
   
     completedBy: string | null;
     completedAt: string | null;
