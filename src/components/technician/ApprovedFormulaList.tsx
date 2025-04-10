@@ -18,7 +18,7 @@ const ApprovedFormulaList = ({ onSelect }: Props) => {
         const res = await fetch("/api/formulas");
         const data = await res.json();
         console.log("📦 Raw formulas data:", data);
-console.log("🧪 First formula object:", data[0]);
+        console.log("🧪 First formula object:", data[0]);
 
         const approved = data.filter((f: Formula) => f.status === "Approved");
         setFormulas(approved);

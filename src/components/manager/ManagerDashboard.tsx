@@ -4,6 +4,7 @@ import { withRoleProtection } from "@/components/withRoleProtection";
 import LogoutButton from "@/components/LogoutButton";
 import UserManagementPanel from "@/components/manager/UserManagementPanel";
 import ProductManagementPanel from "@/components/manager/ProductManagementPanel";
+import BatchManagementPanel from "@/components/manager/BatchManagementPanel";
 
 function ManagerDashboardBase() {
   return (
@@ -13,10 +14,15 @@ function ManagerDashboardBase() {
         <LogoutButton />
       </header>
 
-      <div className="max-w-screen-xl mx-auto grid grid-cols-1 gap-12">
+      <div className="max-w-screen-xl mx-auto grid grid-cols-1 gap-4">
         {/* User Management Card */}
         <div className="bg-white p-3 rounded-xl shadow">
           <UserManagementPanel />
+        </div>
+
+        {/* Batch Management Card */}
+        <div className="bg-white p-3 rounded-xl shadow">
+          <BatchManagementPanel />
         </div>
 
         {/* Product Management Card */}

@@ -61,8 +61,8 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
       {batch.phases && (
         <div className="bg-gray-50 border rounded-md p-3 mb-6">
           <p className="font-semibold mb-2">🧪 Ingredients by Phase</p>
-          {batch.phases.map((phase: BatchPhase, phaseIndex: number) => (
-            <div key={phaseIndex} className="mb-4">
+          {batch.phases.map((phase: BatchPhase) => (
+            <div key={phase.phaseId} className="mb-4">
               <h4 className="font-semibold text-blue-700 mb-1">Phase {phase.phaseId}</h4>
               <table className="w-full text-sm text-left border-collapse">
                 <thead>
@@ -73,8 +73,8 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {phase.ingredients.map((ing: BatchIngredient, idx: number) => (
-                    <tr key={idx} className="border-t">
+                  {phase.ingredients.map((ing: BatchIngredient) => (
+                    <tr key={`${phase.phaseId}-${ing.name}`} className="border-t">
                       <td className="p-1">{ing.name}</td>
                       <td className="p-1">{ing.percentage}%</td>
                       <td className="p-1">{ing.weightGrams}g</td>

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    if (!body.formulaId || !body.batchNumber) {
+    if (!body.formulaId || !body.batchId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
