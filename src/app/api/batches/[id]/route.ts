@@ -17,9 +17,9 @@ export async function PATCH(req: NextRequest) {
     console.log(`Attempting to update batch with id: ${id}`);
 
     const body = await req.json();
-    const { status, completedBy, completedAt, completionNotes, abortedAt } = body;
+    const { status, completedBy, completedAt, completionNotes, abortedAt, assignedTo, assignedAt } = body;
 
-    if (!["Completed", "Aborted"].includes(status)) {
+    if (!["InProgress", "Completed", "Aborted"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
@@ -32,6 +32,10 @@ export async function PATCH(req: NextRequest) {
       ...existingBatch,
       status,
       updatedAt: new Date().toISOString(),
+      ...(status === "InProgress" && {
+        assignedTo,
+        assignedAt: assignedAt || new Date().toISOString(),
+      }),
       ...(status === "Completed" && {
         completedAt: completedAt || new Date().toISOString(),
         completedBy,
@@ -46,63 +50,36 @@ export async function PATCH(req: NextRequest) {
     console.log(`Batch with id: ${id} successfully updated.`);
 
     const timestamp = new Date().toISOString();
-    const triggeredBy = req.nextUrl.searchParams.get("triggeredBy") || "unknown";
+    let eventType: "Accepted" | "Completed" | "Aborted" | null = null;
 
-    await fetch(`${process.env.NEXT_PUBLIC_REDIRECT_URI}/api/batchEvents`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        batchId: id,
-        eventType: "StatusUpdated",
-        triggeredBy,
-        timestamp,
-      }),
-    });
+    switch (status) {
+      case "InProgress":
+        eventType = "Accepted";
+        break;
+      case "Completed":
+        eventType = "Completed";
+        break;
+      case "Aborted":
+        eventType = "Aborted";
+        break;
+    }
+
+    if (eventType) {
+      await fetch(`${process.env.NEXT_PUBLIC_REDIRECT_URI}/api/batchEvents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          batchId: id,
+          eventType,
+          triggeredBy: assignedTo || completedBy || existingBatch.assignedTo || existingBatch.completedBy || "system",
+          timestamp,
+        }),
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("❌ Failed to update batch:", err.message);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
-
-// DELETE
-export async function DELETE(req: NextRequest) {
-  try {
-    const id = extractIdFromUrl(req.nextUrl.pathname);
-    console.log(`Attempting to delete batch with id: ${id}`);
-
-    const { resource: batch } = await container.item(id, id).read();
-    if (!batch) {
-      return NextResponse.json({ error: "Batch not found" }, { status: 404 });
-    }
-
-    await container.item(id, id).delete();
-    console.log(`Batch with id: ${id} successfully deleted.`);
-
-    const timestamp = new Date().toISOString();
-    const triggeredBy = req.nextUrl.searchParams.get("triggeredBy") || "unknown";
-
-    const eventRes = await fetch(`${process.env.NEXT_PUBLIC_REDIRECT_URI}/api/batchEvents`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        batchId: id,
-        eventType: "Deleted",
-        triggeredBy,
-        timestamp,
-      }),
-    });
-
-    if (!eventRes.ok) {
-      const error = await eventRes.json();
-      console.error("❌ Failed to log event:", error);
-      return NextResponse.json({ error: "Failed to log event", details: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error("❌ Failed to delete batch:", err.message);
-    return NextResponse.json({ error: "Failed to delete batch", details: err.message }, { status: 500 });
   }
 }

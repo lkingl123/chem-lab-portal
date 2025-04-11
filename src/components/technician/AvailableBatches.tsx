@@ -16,7 +16,7 @@ export default function AvailableBatches({ onSelect, refreshKey }: Props) {
       try {
         const res = await fetch("/api/batches");
         const data = await res.json();
-        setBatches(data.filter((b: BatchRecord) => b.status !== "Completed"));
+        setBatches(data.filter((b: BatchRecord) => b.status === "NotStarted"));
       } catch (err) {
         console.error("❌ Failed to load batches", err);
       } finally {

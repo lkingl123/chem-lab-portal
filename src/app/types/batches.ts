@@ -23,7 +23,7 @@ export interface BatchIngredient {
     createdBy: string;
     createdAt: string;
   
-    status: "NotStarted" | "Unassigned" | "In Progress" | "InProgress" | "Completed" | "Aborted";
+    status: "NotStarted" | "InProgress" | "Completed" | "Aborted";
 
     assignedTo: string | null;
     assignedAt: string | null;

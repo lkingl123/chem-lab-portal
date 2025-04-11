@@ -6,6 +6,7 @@ import LogoutButton from "@/components/LogoutButton";
 
 import AvailableBatches from "@/components/technician/AvailableBatches";
 import InProgressBatches from "@/components/technician/InProgressBatches";
+import CompletedBatches from "@/components/technician/CompletedBatches";
 import BatchRecordForm from "@/components/technician/BatchRecordForm";
 
 import type { BatchRecord } from "../../app/types/batches";
@@ -26,8 +27,16 @@ function TechnicianDashboardBase() {
       <div className="max-w-screen-xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column – batch lists */}
         <div className="md:col-span-1 space-y-6">
-          <AvailableBatches onSelect={setSelectedBatch} refreshKey={refreshToggle} />
-          <InProgressBatches refreshKey={refreshToggle} />
+          <AvailableBatches
+            onSelect={setSelectedBatch}
+            refreshKey={refreshToggle}
+          />
+          <InProgressBatches
+            refreshKey={refreshToggle}
+            onSelect={setSelectedBatch}
+            selectedBatchId={selectedBatch?.id || null}
+          />
+          <CompletedBatches refreshKey={refreshToggle} />
         </div>
 
         {/* Right column – form */}
@@ -36,7 +45,10 @@ function TechnicianDashboardBase() {
             <BatchRecordForm
               batch={selectedBatch}
               onCancel={() => setSelectedBatch(null)}
-              onComplete={refreshBatches}
+              onComplete={() => {
+                setSelectedBatch(null);
+                refreshBatches();
+              }}
             />
           )}
         </div>
