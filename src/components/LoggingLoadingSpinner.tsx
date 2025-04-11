@@ -1,9 +1,40 @@
-'use client';
+"use client";
 
-export default function LoggingLoadingSpinner() {
+import { useEffect, useState, useRef } from "react";
+import { useParams } from "next/navigation";
+import PrintableBatchSheet from "@/components/PrintableBatchSheet";
+import LoggingLoadingSpinner from "@/components/LoggingLoadingSpinner"; 
+import type { BatchRecord } from "@/app/types/batches";
+
+export default function PrintBatchPage() {
+  const { id } = useParams();
+  const [batch, setBatch] = useState<BatchRecord | null>(null);
+  const hasPrintedRef = useRef(false);
+
+  useEffect(() => {
+    const fetchBatch = async () => {
+      const res = await fetch(`/api/batches/${id}`);
+      const data = await res.json();
+      setBatch(data);
+    };
+
+    fetchBatch();
+  }, [id]);
+
+  useEffect(() => {
+    if (batch && !hasPrintedRef.current) {
+      hasPrintedRef.current = true;
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    }
+  }, [batch]);
+
+  if (!batch) return <LoggingLoadingSpinner />; 
+
   return (
-    <div className="fixed inset-0 z-50 bg-white bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    <div className="p-6 print:p-0">
+      <PrintableBatchSheet batch={batch} />
     </div>
   );
 }

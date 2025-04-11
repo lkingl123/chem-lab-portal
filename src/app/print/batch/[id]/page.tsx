@@ -1,14 +1,15 @@
-// app/print/batch/[id]/page.tsx
-
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import PrintableBatchSheet from "@/components/PrintableBatchSheet";
+import LoggingLoadingSpinner from "@/components/LoggingLoadingSpinner"; 
 import type { BatchRecord } from "@/app/types/batches";
 
 export default function PrintBatchPage() {
   const { id } = useParams();
   const [batch, setBatch] = useState<BatchRecord | null>(null);
+  const hasPrintedRef = useRef(false);
 
   useEffect(() => {
     const fetchBatch = async () => {
@@ -21,14 +22,15 @@ export default function PrintBatchPage() {
   }, [id]);
 
   useEffect(() => {
-    if (batch) {
+    if (batch && !hasPrintedRef.current) {
+      hasPrintedRef.current = true;
       setTimeout(() => {
         window.print();
-      }, 500); // give time for rendering
+      }, 500);
     }
   }, [batch]);
 
-  if (!batch) return <p>Loading...</p>;
+  if (!batch) return <LoggingLoadingSpinner />; 
 
   return (
     <div className="p-6 print:p-0">
