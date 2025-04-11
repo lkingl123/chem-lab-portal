@@ -1,6 +1,4 @@
-
-
-
+"use client";
 import type { BatchRecord, BatchPhase, BatchIngredient } from "@/app/types/batches";
 
 export default function PrintableBatchSheet({ batch }: { batch: BatchRecord }) {
