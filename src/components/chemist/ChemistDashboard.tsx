@@ -6,6 +6,7 @@ import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import LoggingLoadingSpinner from "@/components/LoggingLoadingSpinner";
 import { withRoleProtection } from "@/components/withRoleProtection";
+import { useMsal } from "@azure/msal-react";
 
 type Formula = {
   id: string;
@@ -16,6 +17,8 @@ type Formula = {
 function ChemistDashboardBase() {
   const [formulas, setFormulas] = useState<Formula[]>([]);
   const [loading, setLoading] = useState(true);
+  const { accounts } = useMsal();
+  const userEmail = accounts[0]?.username || "Unknown User";
 
   useEffect(() => {
     const fetchFormulas = async () => {
@@ -36,12 +39,17 @@ function ChemistDashboardBase() {
   return (
     <div className="p-8 space-y-6">
       {/* Header row */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">🧪 Chemist Dashboard</h1>
+      <header className="max-w-screen-xl mx-auto px-6 flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+          <h1 className="text-3xl font-bold">🔧 Chemist Dashboard</h1>
+          <span className="text-sm text-gray-500 italic">👤 {userEmail}</span>
+        </div>
         <LogoutButton />
-      </div>
+      </header>
 
-      <p className="text-gray-700">View formulas, edit them, and submit for review.</p>
+      <p className="text-gray-700">
+        View formulas, edit them, and submit for review.
+      </p>
 
       {/* Sub-header + create button */}
       <div className="flex justify-between items-center">
