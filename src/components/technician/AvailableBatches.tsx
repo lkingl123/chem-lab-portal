@@ -1,4 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
+import { useMsal } from "@azure/msal-react";
 import type { BatchRecord } from "../../app/types/batches";
 
 type Props = {
@@ -7,6 +10,9 @@ type Props = {
 };
 
 export default function AvailableBatches({ onSelect, refreshKey }: Props) {
+  const { accounts } = useMsal();
+  const userEmail = accounts[0]?.username;
+
   const [batches, setBatches] = useState<BatchRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +22,15 @@ export default function AvailableBatches({ onSelect, refreshKey }: Props) {
       try {
         const res = await fetch("/api/batches");
         const data = await res.json();
-        setBatches(data.filter((b: BatchRecord) => b.status === "NotStarted"));
+
+        // Only show NotStarted batches that are either unassigned OR assigned to this user
+        const visibleBatches = data.filter(
+          (b: BatchRecord) =>
+            b.status === "NotStarted" &&
+            (!b.assignedTo || b.assignedTo === userEmail)
+        );
+
+        setBatches(visibleBatches);
       } catch (err) {
         console.error("❌ Failed to load batches", err);
       } finally {
