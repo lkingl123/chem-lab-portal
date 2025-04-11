@@ -7,7 +7,7 @@ import type {
   BatchPhase,
   BatchIngredient,
 } from "../../app/types/batches";
-import PrintableBatchSheet from "../PrintableBatchSheet"
+import PrintableBatchSheet from "../PrintableBatchSheet";
 import { useRef } from "react";
 
 type Props = {
@@ -39,9 +39,11 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });
-
-      if (res.ok) setAccepted(true);
-      else {
+  
+      if (res.ok) {
+        setAccepted(true);
+        onComplete(); // ✅ trigger dashboard refresh
+      } else {
         const result = await res.json();
         alert(`❌ Failed to accept batch: ${result.error}`);
       }
@@ -49,19 +51,6 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
       console.error("PATCH error:", err);
       alert("❌ Network error");
     }
-  };
-
-  const printRef = useRef<HTMLDivElement>(null);
-
-  const handlePrint = () => {
-    if (!printRef.current) return;
-    const printContents = printRef.current.innerHTML;
-    const originalContents = document.body.innerHTML;
-
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
   };
 
   const handleComplete = async () => {
@@ -116,18 +105,16 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
       {/* Print Button */}
       {accepted && isOwner && (
         <div className="absolute top-4 right-4">
-          <button
-            onClick={handlePrint}
+          <a
+            href={`/print/batch/${batch.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
             🖨️ Print Sheet
-          </button>
+          </a>
         </div>
       )}
-
-      <div ref={printRef}>
-        <PrintableBatchSheet batch={batch} />
-      </div>
 
       <h2 className="text-xl font-semibold mb-4">{batch.batchId}</h2>
 

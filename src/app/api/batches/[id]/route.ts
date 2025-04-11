@@ -83,3 +83,21 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+
+// GET
+export async function GET(req: NextRequest) {
+  try {
+    const id = extractIdFromUrl(req.nextUrl.pathname);
+    const { resource } = await container.item(id, id).read();
+
+    if (!resource) {
+      return NextResponse.json({ error: "Batch not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(resource);
+  } catch (err: any) {
+    console.error("❌ Failed to fetch batch:", err.message);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}

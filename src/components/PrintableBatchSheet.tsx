@@ -1,56 +1,49 @@
-// components/PrintableBatchSheet.tsx
 "use client";
+import type { BatchRecord, BatchPhase, BatchIngredient } from "@/app/types/batches";
 
-import { forwardRef } from "react";
-import type { BatchRecord, BatchPhase, BatchIngredient } from "../app/types/batches";
-
-type Props = {
-  batch: BatchRecord;
-};
-
-const PrintableBatchSheet = forwardRef<HTMLDivElement, Props>(({ batch }, ref) => {
+export default function PrintableBatchSheet({ batch }: { batch: BatchRecord }) {
   return (
-    <div ref={ref} className="p-4">
-      <h2 className="text-xl font-semibold mb-4">{batch.batchId}</h2>
+    <div className="text-black p-8">
+      <h1 className="text-2xl font-bold mb-4">Batch Sheet: {batch.batchId}</h1>
 
-      <div className="mb-4 text-sm text-gray-600 space-y-1">
-        <p><strong>Formula:</strong> {batch.formulaName}</p>
-        <p><strong>Weight:</strong> {batch.targetWeightKg} kg</p>
-        <p><strong>Assigned By:</strong> {batch.assignedBy}</p>
+      <div className="mb-6 space-y-1 text-sm">
+        <p><strong>Formula Name:</strong> {batch.formulaName}</p>
+        <p><strong>Formula ID:</strong> {batch.formulaId}</p>
+        <p><strong>Target Weight (kg):</strong> {batch.targetWeightKg}</p>
+        <p><strong>Assigned To:</strong> {batch.assignedTo || "-"}</p>
+        <p><strong>Assigned By:</strong> {batch.assignedBy || "-"}</p>
         <p><strong>Status:</strong> {batch.status}</p>
+        <p><strong>Completed By:</strong> {batch.completedBy || "-"}</p>
+        <p><strong>Completion Notes:</strong> {batch.completionNotes || "-"}</p>
+        <p><strong>Completed At:</strong> {batch.completedAt || "-"}</p>
       </div>
 
-      {batch.phases && (
-        <div className="border rounded-md p-3 mb-6">
-          <p className="font-semibold mb-2">🧪 Ingredients by Phase</p>
-          {batch.phases.map((phase: BatchPhase) => (
-            <div key={phase.phaseId} className="mb-4">
-              <h4 className="font-semibold text-blue-700 mb-1">Phase {phase.phaseId}</h4>
-              <p className="text-sm italic mb-2">📝 {phase.instructions}</p>
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-1 text-left">Ingredient</th>
-                    <th className="p-1 text-right">% w/w</th>
-                    <th className="p-1 text-right">Weight (g)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {phase.ingredients.map((ing: BatchIngredient) => (
-                    <tr key={`${phase.phaseId}-${ing.name}`} className="border-t">
-                      <td className="p-1">{ing.name}</td>
-                      <td className="p-1 text-right">{ing.percentage}%</td>
-                      <td className="p-1 text-right">{ing.weightGrams}g</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
+      {batch.phases?.map((phase: BatchPhase) => (
+        <div key={phase.phaseId} className="mb-6">
+          <h2 className="text-lg font-semibold mb-1">Phase {phase.phaseId}</h2>
+          <p className="italic text-gray-700 mb-2">{phase.instructions}</p>
+
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-1">Ingredient</th>
+                <th className="text-right p-1">% w/w</th>
+                <th className="text-right p-1">Weight (g)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {phase.ingredients.map((ing: BatchIngredient) => (
+                <tr key={ing.name} className="border-t">
+                  <td className="p-1">{ing.name}</td>
+                  <td className="text-right p-1">{ing.percentage}%</td>
+                  <td className="text-right p-1">{ing.weightGrams}g</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      ))}
+      
     </div>
   );
-});
-
-export default PrintableBatchSheet;
+}
