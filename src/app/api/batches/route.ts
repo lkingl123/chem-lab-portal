@@ -9,19 +9,18 @@ const container = client.database("labportal").container("batches");
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { currentUser } = body; // Current user should be passed from client
 
-    if (!body.formulaId || !body.batchId || !body.assignedBy ) {
+    const { formulaId, batchId, assignedBy } = body;
+
+    if (!formulaId || !batchId || !assignedBy) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const batchId = body.batchId;
-
     const batch = {
-      id: batchId,  // Use the batchId provided by the client
+      id: batchId,
       ...body,
       createdAt: new Date().toISOString(),
       status: "NotStarted",
@@ -29,16 +28,16 @@ export async function POST(req: NextRequest) {
 
     await container.items.create(batch);
 
-    // Log the batch creation event
+    // Log the batch creation event using assignedBy as triggeredBy
     const timestamp = new Date().toISOString();
     try {
-      await fetch("/api/batchEvents", {
+      await fetch(`${process.env.NEXT_PUBLIC_REDIRECT_URI}/api/batchEvents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          batchId,  // Use the same batchId here
+          batchId,
           eventType: "Created",
-          triggeredBy: currentUser,  // Use the currentUser here
+          triggeredBy: assignedBy, // ✅ Corrected
           timestamp,
         }),
       });
@@ -55,12 +54,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-    try {
-      const { resources } = await container.items.query("SELECT * FROM c").fetchAll();
-      return NextResponse.json(resources);
-    } catch (error: any) {
-      console.error("❌ Failed to fetch batch list:", error.message);
-      return NextResponse.json({ error: "Server error" }, { status: 500 });
-    }
+  try {
+    const { resources } = await container.items
+      .query("SELECT * FROM c")
+      .fetchAll();
+    return NextResponse.json(resources);
+  } catch (error: any) {
+    console.error("❌ Failed to fetch batch list:", error.message);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-  
+}
