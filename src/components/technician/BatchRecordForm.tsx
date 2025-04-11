@@ -7,6 +7,8 @@ import type {
   BatchPhase,
   BatchIngredient,
 } from "../../app/types/batches";
+import PrintableBatchSheet from "../PrintableBatchSheet"
+import { useRef } from "react";
 
 type Props = {
   batch: BatchRecord;
@@ -18,6 +20,7 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
   const { accounts } = useMsal();
   const userEmail = accounts[0]?.username || "unknown";
 
+  const isOwner = batch.assignedTo?.toLowerCase() === userEmail.toLowerCase();
   const [notes, setNotes] = useState("");
   const [accepted, setAccepted] = useState(batch.status === "InProgress");
 
@@ -37,10 +40,8 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
         body: JSON.stringify(patch),
       });
 
-      if (res.ok) {
-        setAccepted(true);
-
-      } else {
+      if (res.ok) setAccepted(true);
+      else {
         const result = await res.json();
         alert(`❌ Failed to accept batch: ${result.error}`);
       }
@@ -50,7 +51,20 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
     }
   };
 
-  const handleSubmit = async () => {
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    if (!printRef.current) return;
+    const printContents = printRef.current.innerHTML;
+    const originalContents = document.body.innerHTML;
+
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload();
+  };
+
+  const handleComplete = async () => {
     const patch = {
       completedBy: userEmail,
       completedAt: new Date().toISOString(),
@@ -66,7 +80,7 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
       });
 
       if (res.ok) {
-        alert("✅ Batch completed!");
+        alert("✅ Batch completed and signed!");
         onComplete();
       } else {
         const result = await res.json();
@@ -78,8 +92,43 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
     }
   };
 
+  const handleAbort = async () => {
+    const res = await fetch(`/api/batches/${batch.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "Aborted",
+        abortedAt: new Date().toISOString(),
+      }),
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      alert("⛔ Batch aborted");
+      onComplete();
+    } else {
+      alert(`❌ Error: ${result.error}`);
+    }
+  };
+
   return (
-    <div className="bg-white shadow-md p-4 rounded-lg">
+    <div className="bg-white shadow-md p-4 rounded-lg relative">
+      {/* Print Button */}
+      {accepted && isOwner && (
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={handlePrint}
+            className="text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          >
+            🖨️ Print Sheet
+          </button>
+        </div>
+      )}
+
+      <div ref={printRef}>
+        <PrintableBatchSheet batch={batch} />
+      </div>
+
       <h2 className="text-xl font-semibold mb-4">{batch.batchId}</h2>
 
       <div className="mb-4 text-sm text-gray-600 space-y-1">
@@ -113,6 +162,7 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
         </p>
       </div>
 
+      {/* Phase Instructions + Ingredients */}
       {batch.phases && (
         <div className="bg-gray-50 border rounded-md p-3 mb-6">
           <p className="font-semibold mb-2">🧪 Ingredients by Phase</p>
@@ -124,7 +174,6 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
               <p className="text-sm text-gray-700 italic mb-2">
                 📝 {phase.instructions}
               </p>
-
               <table className="w-full text-sm text-left border-collapse">
                 <thead>
                   <tr className="border-b">
@@ -151,7 +200,23 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
         </div>
       )}
 
-      <div className="flex gap-4">
+      {/* Notes Section */}
+      {accepted && isOwner && (
+        <div className="mb-6">
+          <label className="block font-medium mb-1">
+            Notes (for issues or comments)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full border p-2 rounded"
+            rows={4}
+          />
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap items-center gap-4">
         {!accepted ? (
           <button
             onClick={handleAccept}
@@ -159,20 +224,40 @@ const BatchRecordForm = ({ batch, onCancel, onComplete }: Props) => {
           >
             🟢 Accept Batch
           </button>
+        ) : isOwner ? (
+          <>
+            <div className="flex gap-4">
+              <button
+                onClick={handleComplete}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                ✅ Complete & Sign
+              </button>
+              <button
+                onClick={onCancel}
+                className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Minimize
+              </button>
+            </div>
+
+            <div className="ml-auto">
+              <button
+                onClick={handleAbort}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                ⛔ Abort
+              </button>
+            </div>
+          </>
         ) : (
           <button
-            onClick={handleSubmit}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            onClick={onCancel}
+            className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
           >
-            ✅ Submit & Sign
+            Cancel
           </button>
         )}
-        <button
-          onClick={onCancel}
-          className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );

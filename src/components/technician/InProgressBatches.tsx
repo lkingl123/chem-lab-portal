@@ -96,18 +96,6 @@ const InProgressBatches = ({ refreshKey, onSelect, selectedBatchId }: Props) => 
                           ▶️ Continue
                         </button>
                       )}
-                      <button
-                        onClick={() => updateStatus(batch.id, "Completed")}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                      >
-                        ✅ Complete
-                      </button>
-                      <button
-                        onClick={() => updateStatus(batch.id, "Aborted")}
-                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                      >
-                        ⛔ Abort
-                      </button>
                     </div>
                   )}
                 </div>
